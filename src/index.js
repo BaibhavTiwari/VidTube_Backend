@@ -1,48 +1,51 @@
-// require('dotenv').config({ path: './env' })
-// the above method will work properely without any issue, the main issue in using this approach is that it reduces the code consistency..
-
-
-import dotenv from "dotenv";
-import connectDB from './db/index.js';
-import { application } from "express";
-
+// require('dotenv').config({path: './env'})
+import dotenv from "dotenv"
+import connectDB from "./db/index.js";
+import {app} from './app.js'
 dotenv.config({
-  path: './env'
+    path: './.env'
 })
 
+
+
 connectDB()
-  .then(() => {
-    app.listen(process.env.PORT || 80001),
-      () => { `server is running at port ${process.env.PORT}` }
-  })
-  .catch((err) => {
-    console.log("MongoDB conection failes...", err);
-  })
+.then(() => {
+    app.listen(process.env.PORT || 8000, () => {
+        console.log(`⚙️  Server is running at port : ${process.env.PORT}`);
+    })
+})
+.catch((err) => {
+    console.log("MONGO db connection failed !!! ", err);
+})
+
+
+
+
+
+
 
 
 
 
 /*
-
-Basic approach to database connectivity, this will work too without any issue !!
-
-import express from "express";
+import express from "express"
 const app = express()
+( async () => {
+    try {
+        await mongoose.connect(`${process.env.MONGODB_URI}/${DB_NAME}`)
+        app.on("errror", (error) => {
+            console.log("ERRR: ", error);
+            throw error
+        })
 
- (async () => {
-   try {
-     await mongoose.connect(`${process.env.MONGODB_URl}/${DB_NAME}`)
-     app.on("error", (error) => {
-       console.log("ERROR:", error);
-       throw error
-     })
-     app.listen(process.env.PORT, () => {
-       console.log(`App is running on port ${process.env.PORT}`);
-     })
-   } catch (error) {
-     console.error("Error:", error);
-     throw error
-   }
- })()
+        app.listen(process.env.PORT, () => {
+            console.log(`App is listening on port ${process.env.PORT}`);
+        })
+
+    } catch (error) {
+        console.error("ERROR: ", error)
+        throw err
+    }
+})()
 
 */
