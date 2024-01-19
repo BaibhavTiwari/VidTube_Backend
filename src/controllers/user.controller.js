@@ -4,6 +4,21 @@ import { User } from "../models/user.models.js"
 import { uploadCloudinary } from "../utils/cloudInary.js"
 import { apiResponse } from "../utils/apiResponse.js";
 
+const genereateAcessAndRefreshTokens = async (userId) => {
+  try {
+    const user = await user.findById(userId)
+    const accessToken = user.generateAccessToken()
+    const refreshToken = user.generateRefreshToken()
+
+    user.refreshToken = refreshToken
+    user.save({ validateBeforeSave: false })
+
+  } catch (error) {
+    throw new apiError(500, "Something went wrong while genrating refresh and acess token ....")
+  }
+}
+
+
 const registerUser = asyncHandler(async (req, res) => {
   const { fullname, email, username, password } = req.body
   console.log("email :", email);
@@ -59,4 +74,52 @@ const registerUser = asyncHandler(async (req, res) => {
 
 })
 
-export { registerUser }
+const loginUser = asyncHandler(async (req, res) => {
+
+  const { email, username, password } = req.body
+  if (!username || !email) {
+    throw new apiError(400, "username or email is required")
+  }
+
+  const user = await User.findOne({
+    $or: [{ username }, { email }]
+  })
+
+  if (!user) {
+    throw new apiError(404, "User does not exist...")
+  }
+
+  const isPasswordValid = await user.isPasswordCorrect(password)
+
+  if (!isPasswordValid) {
+    throw new apiError(401, "Invalid user credentials...")
+  }
+
+  const { accessToken, refreshToken } = await
+    genereateAcessAndRefreshTokens(user._id)
+
+
+  const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
+
+  const options = {
+    httpOnly: true,
+    secure: true
+  }
+
+  return res.status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new apiResponse(
+        200,
+        {
+          user: loggedInUser, accessToken, refreshToken
+        },
+        "User Logged in Successfully...."
+      )
+    )
+})
+
+//const logoutUser = asyncHandler(async (req, res) => {})
+
+export { registerUser, loginUser }
